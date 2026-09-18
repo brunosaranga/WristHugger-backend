@@ -1,0 +1,11 @@
+<h1>{{ client.name }} is registered</h1>
+<p>Client ID: <code>{{ client.client_id }}</code></p>
+
+{% if raw_secret %}
+    <p><strong>Client secret - copy it now, it will not be shown again:</strong></p>
+    <pre>{{ raw_secret }}</pre>
+{% else %}
+    <p>This is a public client - no secret is issued. It'll use PKCE alone.</p>
+{% endif %}
+
+<p><a href="{% url 'core:register_client' %}">Register another client</a></p>
