@@ -49,7 +49,7 @@ class Client(models.Model):
             self.client_id = secrets.token_urlsafe(24)
         super().save(*args, **kwargs)
 
-    def redirect_uri_listed(self):
+    def redirect_uri_list(self):
         return [uri.strip() for uri in self.redirect_uris.splitlines() if uri.strip()]
 
     def set_client_secret(self, raw_secret):
@@ -150,6 +150,9 @@ class RefreshToken(models.Model):
         return hashlib.sha256(raw_token.encode()).hexdigest()
 
     def is_expired(self):
+        return timezone.now() >= self.expires_at
+
+    def is_revoked(self):
         return self.revoked_at is not None
 
     def __str__(self):

@@ -21,7 +21,7 @@ class ProtectedResourceView(View):
 
         try:
             claims = decode_access_token(token)
-        except jwt.ExpiredSignatireError:
+        except jwt.ExpiredSignatureError:
             return JsonResponse({"error": "invalid_token", "error_description": "Token has expired."}, status=401)
         except jwt.InvalidTokenError:
             return JsonResponse(

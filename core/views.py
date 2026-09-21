@@ -116,7 +116,7 @@ class AuthorizeView(LoginRequiredMixin, View):
         # Exact match against the registred list, not a prefix or domain check - a client that registered one callback path shouldn't be able to redirect users to some other path on request.
         if redirect_uri not in client.redirect_uri_list():
             raise AuthorizeError(
-                "invalid_request", "redirect_uri is not registered for this client."
+                "invalid_request", "redirect_uri is not registered for this client.", safe_redirect=False
             )
 
         # redirect_uri is now verified against the client's own registration, so it's safe to send the browser there for every error from here on.
@@ -190,7 +190,7 @@ class AuthorizeView(LoginRequiredMixin, View):
 
     @staticmethod
     def _build_redirect(redirect_uri, **params):
-        query = "&".join(f"{key}={quote(str(value))}" for key, value in params.itmes() if value)
+        query = "&".join(f"{key}={quote(str(value))}" for key, value in params.items() if value)
         separator = "&" if "?" in redirect_uri else "?"
         return f"{redirect_uri}{separator}{query}"
 
@@ -241,7 +241,7 @@ class TokenView(View):
             grant_type = request.POST.get("grant_type")
             if grant_type == "authorization_code":
                 payload = self._authorization_code_grant(request)
-            elif rant_type == "refresh_token":
+            elif grant_type == "refresh_token":
                 payload = self._refresh_token_grant(request)
             else:
                 raise TokenError("unsupported_grant_type", "grant_type must be authorization_code or refresh_token.")
@@ -299,7 +299,7 @@ class TokenView(View):
 
             if code.is_used():
                 if code.issued_refresh_token_id:
-                    code.issued_refresh_token_revoked_at = timezone.now()
+                    code.issued_refresh_token.revoked_at = timezone.now()
                     code.issued_refresh_token.save(update_fields=["revoked_at"])
                 raise TokenError("invalid_grant", "This authorization code has already been used.")
 

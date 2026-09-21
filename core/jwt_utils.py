@@ -31,4 +31,4 @@ def decode_access_token(token):
     """
     For a resource server (or a protected endpoint on this server) to verify a token. The algorithm is pinned explicitly here, never read from the tokein;s own header - that's what closes the classic alg=none downgrade attack.
     """
-    return jwt.decode(token, load_public_key(), algorithm=["RS256"], issuer=settings.OAUTH_ISSUER)
+    return jwt.decode(token, load_public_key(), algorithms=["RS256"], issuer=settings.OAUTH_ISSUER)
