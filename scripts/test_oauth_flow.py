@@ -83,10 +83,21 @@ def get_authorization_code(session, challenge):
         "scope": SCOPES,
     }
 
-    consent_page = session.get(f"{BASE_URL}/authorize/", params=params)
-    if consent_page.status_code != 200:
-        raise SystemExit(f"GET /authorize/ failed: {consent_page.status_code} {consent_page.text[:300]}")
-    log("Consent screen rendered", f"status {consent_page.status_code}")
+    # allow_redirects=False on purpose: if this client+scope combo was
+    # already approved in an earlier run, /authorize skips consent and
+    # redirects straight to a code. Letting requests follow that
+    # automatically would try to GET the client's own callback page,
+    # which this server was never meant to serve.
+    first = session.get(f"{BASE_URL}/authorize/", params=params, allow_redirects=False)
+
+    if first.status_code == 302:
+        code = _extract_code(first, "GET /authorize/")
+        log("Authorization code issued (consent already on file)", code)
+        return code
+
+    if first.status_code != 200:
+        raise SystemExit(f"GET /authorize/ failed: {first.status_code} {first.text[:300]}")
+    log("Consent screen rendered", f"status {first.status_code}")
 
     approve = session.post(
         f"{BASE_URL}/authorize/",
@@ -94,17 +105,21 @@ def get_authorization_code(session, challenge):
         headers=csrf_header(session),
         allow_redirects=False,
     )
-    location = approve.headers.get("Location")
+    code = _extract_code(approve, "POST /authorize/")
+    log("Authorization code issued", code)
+    return code
+
+
+def _extract_code(response, label):
+    location = response.headers.get("Location")
     if not location:
-        raise SystemExit(f"POST /authorize/ did not redirect: {approve.status_code} {approve.text[:300]}")
+        raise SystemExit(f"{label} did not redirect: {response.status_code} {response.text[:300]}")
 
     query = parse_qs(urlparse(location).query)
     if "error" in query:
         raise SystemExit(f"Authorization denied: {query}")
 
-    code = query["code"][0]
-    log("Authorization code issued", code)
-    return code
+    return query["code"][0]
 
 
 def exchange_code(session, code, verifier):
@@ -119,7 +134,14 @@ def exchange_code(session, code, verifier):
             "client_secret": CLIENT_SECRET,
         },
     )
-    payload = response.json()
+    # payload = response.json()
+    if not response.text:
+        raise SystemExit(f"POST /token/ returned an empty body. Status: {response.status_code}")
+    try:
+        payload = response.json()
+    except:
+        raise SystemExit(f"POST /token/ returned non-JSON. Status: {response.status_code}\nBody:\n{response.text[:500]}")
+
     if response.status_code != 200:
         raise SystemExit(f"Tpken exchange failed: {payload}")
     log("Tokens issued", f"access_token expires in {payload['expires_in']}s")

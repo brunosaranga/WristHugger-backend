@@ -2,3 +2,4 @@ keys/__pycache__/
 *.pyc
 db.sqlite3
 .env
+scripts/test_oauth_flow.py

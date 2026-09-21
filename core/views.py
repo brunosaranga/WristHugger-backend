@@ -207,7 +207,7 @@ class TokenError(Exception):
 
 def _pkce_matches(code_verifier, code_challenge):
     digest = hashlib.sha256(code_verifier.encode()).digest()
-    computed = base64.urlsafe_b64encode(digest).rstrip(b="=").decode()
+    computed = base64.urlsafe_b64encode(digest).rstrip(b"=").decode()
     return hmac.compare_digest(computed, code_challenge)
 
 def _create_refresh_token(client, user, scopes, rotated_from=None):
