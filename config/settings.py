@@ -125,3 +125,7 @@ OAUTH_ACCESS_TOKEN_LIFETIME = 60 * 15 # 15 minutes
 OAUTH_REFRESH_TOKEN_LIFETIME = 60 * 60 * 24 * 30 # 30 days
 OAUTH_PRIVATE_KEY_PATH = BASE_DIR / "keys" / "private_key.pem"
 OAUTH_PUBLIC_KEY_PATH = BASE_DIR / "keys" / "public_key.pem"
+
+
+LOGIN_URL = "/login/"
+LOGIN_REDIRECT_URL = "/clients/register/"
